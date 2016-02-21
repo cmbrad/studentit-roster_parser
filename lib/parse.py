@@ -1,8 +1,7 @@
 import os
-import openpyxl
 
-from lib.parser import XLSParser, XLSXParser
 from lib.exceptions import UnsupportedFileTypeException
+from lib.parser import XLSParser, XLSXParser
 
 # Which parser is used for which file type
 ext_to_parser = {
@@ -29,6 +28,7 @@ def select_parser(file_name):
         parser = ext_to_parser.get(ext)(file_name)
     except TypeError:
         supported_types = ','.join(ext_to_parser.keys())
-        raise UnsupportedFileTypeException("Unsupported file type. Supported types are [{file_types}]".format(file_types=supported_types))
+        raise UnsupportedFileTypeException(
+            "Unsupported file type. Supported types are [{file_types}]".format(file_types=supported_types))
 
     return parser

@@ -1,3 +1,2 @@
-
 class UnsupportedFileTypeException(Exception):
     pass
