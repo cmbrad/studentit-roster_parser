@@ -12,7 +12,8 @@ def cli():
 @click.option('--file-name', required=True)
 def parse(file_name):
     try:
-        parse_roster(file_name)
+        roster = parse_roster(file_name)
+        print(roster)
     except IOError as e:
         print('Could not parse roster. Error: {}'.format(e.strerror))
 
