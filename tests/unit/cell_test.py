@@ -1,4 +1,4 @@
-from lib.cell import Cell
+from lib.parser.helper import Cell
 
 
 def test_cells_with_same_row_and_col_should_be_equal():

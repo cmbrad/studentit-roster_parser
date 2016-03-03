@@ -1,9 +1,7 @@
+from lib.models.roster import Roster
 from lib.parser import BaseParser
-
+from lib.parser.helper.cell import Cell
 from openpyxl import load_workbook
-
-from lib.roster import Roster
-from lib.cell import Cell
 
 
 class XLSXParser(BaseParser):
