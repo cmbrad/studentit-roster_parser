@@ -3,6 +3,7 @@ from datetime import datetime
 from dateutil import parser as date_parser
 
 from openpyxl import load_workbook
+from openpyxl.styles.fills import PatternFill
 
 from lib.models.roster import Roster
 from lib.models.shift import Shift
@@ -71,22 +72,61 @@ class XLSXParser(BaseParser):
             end_cell = Cell.from_cell(row=SHIFT_ROW_LIMIT, col=start_cell.col)
 
             cells = Cell.row_range(start_cell=start_cell, end_cell=end_cell)
-            for cell in cells:
-                value = ws[str(cell)].value
-                fill = ws[str(cell)].fill
+            while True:
+                cells, shift = XLSXParser.extract_shift(
+                    ws=ws,
+                    times=times,
+                    person=people[p],
+                    cells=cells)
 
-                if fill.fgColor.type == 'indexed':
-                    shift = Shift(
-                        start_time=times[cell.row].start_time,
-                        end_time=times[cell.row].end_time,
-                        person=people[p],
-                        location=BaseParser.colour_to_location(fill.fgColor.index)
-                    )
-
+                if shift is not None:
                     shifts.append(shift)
+                elif len(cells) == 0:
+                    break
 
         return shifts
 
+    @staticmethod
+    def extract_shift(ws, times, person, cells):
+        start_time = end_time = location = None
+
+        i = 0
+        for cell in cells:
+            i = i + 1
+            value = ws[str(cell)].value
+            fill = ws[str(cell)].fill
+
+            location = XLSXParser.location_from_cell(ws, cell)
+
+            if location:
+                start_time = times[cell.row].start_time if start_time is None else start_time
+                end_time = times[cell.row].end_time
+
+            next_location = XLSXParser.location_from_cell(ws, cell.down())
+            if not next_location or location != next_location:
+                break
+
+        if None not in [start_time, end_time, location]:
+            shift = Shift(
+                start_time=start_time,
+                end_time=end_time,
+                person=person,
+                location=location
+            )
+        else:
+            shift = None
+
+        return cells[i+1:], shift
+
+    @staticmethod
+    def location_from_cell(ws, cell):
+        fill = ws[str(cell)].fill
+
+        if len(str(fill)) == 0 or fill.fgColor.type != 'indexed':
+            return None
+
+        return XLSXParser.colour_to_location(fill.fgColor.index)
+            
 
 def validate_date(date_str):
     try:
@@ -108,3 +148,4 @@ def validate_times(time_str):
 def combine_date_and_time(date, time):
     return datetime(year=date.year, month=date.month, day=date.day,
                     hour=time.hour, minute=time.minute)
+
