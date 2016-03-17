@@ -28,23 +28,30 @@ class XLSXParser(BaseParser):
         times = {}
         cells = Cell.row_range(start_cell=TIMES_START_CELL, end_cell=TIMES_END_CELL)
 
-        current_date = None
-        for cell in cells:
-            _, row = Cell.split_col_row(cell)
-            date_value = ws[str(cell)].value
+        try:
+            current_date = None
+            for cell in cells:
+                _, row = Cell.split_col_row(cell)
+                date_value = ws[str(cell)].value
 
-            new_date = validate_date(date_value)
-            current_date = new_date if new_date is not None else current_date
+                new_date = validate_date(date_value)
+                current_date = new_date if new_date is not None else current_date
 
-            time_value = ws[str(cell.right())].value
+                time_value = ws[str(cell.right())].value
 
-            if time_value:
-                start_time, end_time = validate_times(time_value)
+                if time_value:
+                    start_time, end_time = validate_times(time_value)
 
-                start_datetime = combine_date_and_time(current_date, start_time)
-                end_datetime = combine_date_and_time(current_date, end_time)
+                    try:
+                        start_datetime = combine_date_and_time(current_date, start_time)
+                        end_datetime = combine_date_and_time(current_date, end_time)
+                    except Exception as e:
+                        print('WARNING: Time Cell: {}. Error: {}'.format(cell.right(), e))
 
-                times[row] = Shift(start_time=start_datetime, end_time=end_datetime)
+                    times[row] = Shift(start_time=start_datetime, end_time=end_datetime)
+        except Exception as e:
+            print('Error extracting times. Cell={},Error={}'.format(cell, e))
+            raise Exception(e)
 
         return times
 
@@ -126,7 +133,34 @@ class XLSXParser(BaseParser):
             return None
 
         return XLSXParser.colour_to_location(fill.fgColor.index)
-            
+
+    @staticmethod
+    def apply_filter(text):
+        split = text.split(' ', maxsplit=2)
+        command = split[0]
+        args = split[1]
+
+        if command in ['start']:
+            cmd_start(args)
+        elif command in ['end', 'finish']:
+            cmd_end(args)
+        elif command in ['wk', 'wks']:
+            cmd_wks(args)
+        else:
+            cmd_range(text)
+
+        def cmd_start(args):
+            pass
+
+        def cmd_end(args):
+            pass
+
+        def cmd_range(args):
+            pass
+
+        def cmd_wks(args):
+            pass
+
 
 def validate_date(date_str):
     try:
@@ -142,10 +176,14 @@ def validate_times(time_str):
 
         return times[0], times[1]
     except Exception as e:
+        print('WARNING: Could not validate time string [{}]'.format(time_str))
         return None, None
 
 
 def combine_date_and_time(date, time):
-    return datetime(year=date.year, month=date.month, day=date.day,
-                    hour=time.hour, minute=time.minute)
+    try:
+        return datetime(year=date.year, month=date.month, day=date.day,
+                        hour=time.hour, minute=time.minute)
+    except Exception as e:
+        raise Exception('Failed to combine date and time. Date: [{}] Time: [{}]'.format(date, time))
 

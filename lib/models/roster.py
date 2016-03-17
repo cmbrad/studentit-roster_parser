@@ -1,3 +1,5 @@
+import pickle
+
 class Roster:
     def __init__(self, shifts, people):
         self.people = people
@@ -30,3 +32,10 @@ class Roster:
         )
 
         return info_str
+
+    def save(self):
+        pickle.dump(self, open('saves/roster.p', 'wb'))
+
+    @staticmethod
+    def load(file_name):
+        return pickle.load(open('saves/roster.p', 'rb'))

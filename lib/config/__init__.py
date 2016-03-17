@@ -1,4 +1,13 @@
+import os
+import logging
+	
 from lib.parser.helper.cell import Cell
+
+####################
+# General Settings #
+####################
+SIT_HOME = os.path.join(os.path.expanduser('~'), '.sit')
+LOG_DIR = os.path.join(SIT_HOME, 'logs')
 
 ##########################
 # People database config #
